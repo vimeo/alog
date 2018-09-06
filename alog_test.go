@@ -62,8 +62,8 @@ func ExampleNew() {
 	l.Print(ctx, "Examples have")
 	l.Print(ctx, "weird line numbers")
 	// Output:
-	// Example alog_test.go:2 [example=true] Examples have
-	// Example alog_test.go:3 [example=true] weird line numbers
+	// Example alog_test.go:62 [example=true] Examples have
+	// Example alog_test.go:63 [example=true] weird line numbers
 }
 
 func ExampleWithEmitter() {

@@ -1,6 +1,7 @@
 package alog
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -88,11 +89,7 @@ func (l *Logger) EmitText(w io.Writer) func(e *Entry) {
 			}
 			m.WriteString(file)
 			m.WriteByte(':')
-			for line >= 10 {
-				q := line / 10
-				m.WriteByte(byte('0' + line - q*10))
-				line = q
-			}
+			itoa(m, line)
 			m.WriteByte(' ')
 		}
 
@@ -123,6 +120,19 @@ func (l *Logger) EmitText(w io.Writer) func(e *Entry) {
 		// lines is my personal conception of hell.
 		w.Write(m.Bytes())
 	}
+}
+
+func itoa(w *bytes.Buffer, i int) {
+	buf := make([]byte, 16)
+	p := len(buf) - 1
+	for i >= 10 {
+		q := i / 10
+		buf[p] = byte('0' + i - q*10)
+		p--
+		i = q
+	}
+	buf[p] = byte('0' + i)
+	w.Write(buf[p:])
 }
 
 // Print calls l.Output to emit a log entry. Arguments are handled like

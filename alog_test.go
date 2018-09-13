@@ -27,7 +27,7 @@ func Example() {
 
 func Example_levels() {
 	ctx := context.Background()
-	l := New(WithEmitter(func(e *Entry) {
+	l := New(WithEmitter(EmitterFunc(func(ctx context.Context, e *Entry) {
 		for _, p := range e.Tags {
 			if p[0] != "level" {
 				continue
@@ -42,7 +42,7 @@ func Example_levels() {
 				return
 			}
 		}
-	}))
+	})))
 	error := AddTags(ctx, "level", "error")
 	info := AddTags(ctx, "level", "info")
 	debug := AddTags(ctx, "level", "debug")
@@ -67,9 +67,9 @@ func ExampleNew() {
 }
 
 func ExampleWithEmitter() {
-	dumper := func(e *Entry) {
+	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
 		fmt.Printf("%v %s\n", e.Tags, e.Msg)
-	}
+	})
 	ctx := context.Background()
 	l := New(WithEmitter(dumper), WithFile())
 

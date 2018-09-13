@@ -23,6 +23,21 @@ func New(opts ...Option) *Logger {
 	return &l
 }
 
+// Emitter is the interface that wraps the Emit method.
+//
+// Emit handles a log entry in a customized way.
+type Emitter interface {
+	Emit(context.Context, *Entry)
+}
+
+// EmitterFunc is an adapter to allow the use of an ordinary function as an Emitter.
+type EmitterFunc func(context.Context, *Entry)
+
+// Emit calls f(c, e).
+func (f EmitterFunc) Emit(c context.Context, e *Entry) {
+	f(c, e)
+}
+
 // Logger is a logging object that extracts tags from a context.Context and
 // emits Entry structs.
 //
@@ -35,7 +50,7 @@ type Logger struct {
 	datefmt string
 	flags   uint
 
-	emit func(*Entry)
+	emitter Emitter
 }
 
 // Output emits the supplied string while capturing the caller information
@@ -45,7 +60,7 @@ func (l *Logger) Output(ctx context.Context, calldepth int, msg string) {
 	// This is the bottom of the logger; everything calls this to do writes.
 	// Handling nil here means everything should be able to be called on a nil
 	// *Logger and not explode.
-	if l == nil || l.emit == nil {
+	if l == nil || l.emitter == nil {
 		return
 	}
 	e := Entry{
@@ -62,15 +77,15 @@ func (l *Logger) Output(ctx context.Context, calldepth int, msg string) {
 		}
 	}
 
-	l.emit(&e)
+	l.emitter.Emit(ctx, &e)
 }
 
 // EmitText is the default text format emitter.
 //
 // It closes over the supplied io.Writer and returns a function suitable to
 // pass to WithEmitter.
-func (l *Logger) EmitText(w io.Writer) func(e *Entry) {
-	return func(e *Entry) {
+func (l *Logger) EmitText(w io.Writer) Emitter {
+	return EmitterFunc(func(ctx context.Context, e *Entry) {
 		m := getBuffer()
 		defer putBuffer(m)
 		m.WriteString(l.prefix)
@@ -119,7 +134,7 @@ func (l *Logger) EmitText(w io.Writer) func(e *Entry) {
 		// Writer error is swallowed, because checking errors on writing log
 		// lines is my personal conception of hell.
 		w.Write(m.Bytes())
-	}
+	})
 }
 
 func itoa(w *bytes.Buffer, i int) {

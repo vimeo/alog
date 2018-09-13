@@ -1,1 +1,1 @@
-module "github.com/vimeo/alog"
+module github.com/vimeo/alog/v2

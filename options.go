@@ -31,7 +31,7 @@ type Option func(*Logger)
 // with additional guarentees that every entry generates a single Write call,
 // and calls are serialized.
 func To(w io.Writer) Option {
-	return func(l *Logger) { l.emit = l.EmitText(&out{Writer: w}) }
+	return func(l *Logger) { l.emitter = l.EmitText(&out{Writer: w}) }
 }
 
 // out is a wrapper to guarentee serialized access to the inner Writer.
@@ -90,6 +90,6 @@ func WithUTC() Option {
 // line.
 //
 // Calls to f are not synchronized.
-func WithEmitter(f func(e *Entry)) Option {
-	return func(l *Logger) { l.emit = f }
+func WithEmitter(e Emitter) Option {
+	return func(l *Logger) { l.emitter = e }
 }

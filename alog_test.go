@@ -4,26 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
+	"path/filepath"
 	"testing"
+	"time"
 )
-
-func Example() {
-	ctx := context.Background()
-	l := New(To(os.Stdout))
-
-	l.Print(ctx, "test")
-
-	ctx = AddTags(ctx, "more", "context")
-	l.Print(ctx, "test")
-
-	ctx = AddTags(ctx, "most", "context")
-	l.Print(ctx, "test")
-	// Output:
-	// test
-	// [more=context] test
-	// [more=context most=context] test
-}
 
 func Example_levels() {
 	ctx := context.Background()
@@ -54,29 +38,47 @@ func Example_levels() {
 	// ERROR [[level error]] test
 }
 
-func ExampleNew() {
-	ctx := context.Background()
-	l := New(To(os.Stdout), WithPrefix("Example "), WithShortFile())
-
-	ctx = AddTags(ctx, "example", "true")
-	l.Print(ctx, "Examples have")
-	l.Print(ctx, "weird line numbers")
-	// Output:
-	// Example alog_test.go:62 [example=true] Examples have
-	// Example alog_test.go:63 [example=true] weird line numbers
-}
-
 func ExampleWithEmitter() {
 	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
 		fmt.Printf("%v %s\n", e.Tags, e.Msg)
 	})
 	ctx := context.Background()
-	l := New(WithEmitter(dumper), WithFile())
+	l := New(WithEmitter(dumper))
 
 	ctx = AddTags(ctx, "allthese", "tags")
 	l.Print(ctx, "test")
 	// Output:
 	// [[allthese tags]] test
+}
+
+func ExampleWithCaller() {
+	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
+		fmt.Printf("%s:%d %s\n", filepath.Base(e.File), e.Line, e.Msg)
+	})
+	ctx := context.Background()
+	l := New(WithEmitter(dumper), WithCaller())
+
+	l.Print(ctx, "test")
+	// Output:
+	// alog_test.go:61 test
+}
+
+func TestOverrideTimestamp(t *testing.T) {
+	buf := &bytes.Buffer{}
+	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
+		fmt.Fprintf(buf, "%s %s\n", e.Time.Format(time.RFC3339), e.Msg)
+	})
+
+	ctx := context.Background()
+	l := New(WithEmitter(dumper), OverrideTimestamp(func() time.Time { return time.Time{} }))
+
+	l.Print(ctx, "test")
+
+	want := "0001-01-01T00:00:00Z test\n"
+	got := buf.String()
+	if got != want {
+		t.Fatalf("want: %#q, got: %#q", want, got)
+	}
 }
 
 func TestNilOK(t *testing.T) {
@@ -90,38 +92,14 @@ func TestNilOK(t *testing.T) {
 func TestIgnoredTag(t *testing.T) {
 	t.Parallel()
 	buf := &bytes.Buffer{}
-	want := "[a=b] test\n"
-	l := New(To(buf))
+	want := "[[a b]] test\n"
+	l := New(WithEmitter(EmitterFunc(func(ctx context.Context, e *Entry) {
+		fmt.Fprintf(buf, "%v %s\n", e.Tags, e.Msg)
+	})))
 
 	ctx := AddTags(context.Background(), "a", "b", "unpaired")
 	l.Print(ctx, "test")
 
-	if got := buf.String(); want != got {
-		t.Fatalf("want: %#q, got: %#q", want, got)
-	}
-
-}
-
-func TestToOption(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	buf := &bytes.Buffer{}
-	want := "test\n"
-	var l *Logger
-
-	l = New(To(buf))
-	l.Print(ctx, "test")
-	if got := buf.String(); want != got {
-		t.Fatalf("want: %#q, got: %#q", want, got)
-	}
-
-	buf.Reset()
-	l = nil
-
-	l = New(func(l *Logger) {
-		WithEmitter(l.EmitText(buf))(l)
-	})
-	l.Print(ctx, "test")
 	if got := buf.String(); want != got {
 		t.Fatalf("want: %#q, got: %#q", want, got)
 	}

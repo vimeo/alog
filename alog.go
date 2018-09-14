@@ -5,12 +5,19 @@ package alog // import "github.com/vimeo/alog"
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 )
 
+var defaultEmitter = EmitterFunc(func(ctx context.Context, e *Entry) {
+	tags := ""
+	if len(e.Tags) > 0 {
+		tags = " " + fmt.Sprintf("%v", e.Tags)
+	}
+	fmt.Printf("%s%s %s\n", e.Time.Format(time.RFC3339), tags, e.Msg)
+})
+
 // Default is the the Logger the package-level Print functions use.
-var Default = New(To(os.Stderr), WithShortFile(), WithDateFormat(time.RFC3339), WithUTC())
+var Default = New(WithEmitter(defaultEmitter))
 
 // Print uses the Default Logger to print the supplied string.
 func Print(ctx context.Context, v ...interface{}) {

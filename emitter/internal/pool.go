@@ -1,4 +1,4 @@
-package textlog
+package internal
 
 import (
 	"bytes"
@@ -13,11 +13,13 @@ var bufPool = sync.Pool{
 	},
 }
 
-func getBuffer() *bytes.Buffer {
+// GetBuffer gets a Buffer from the pool.
+func GetBuffer() *bytes.Buffer {
 	return bufPool.Get().(*bytes.Buffer)
 }
 
-func putBuffer(b *bytes.Buffer) {
+// PutBuffer resets a Buffer and puts it back into the pool.
+func PutBuffer(b *bytes.Buffer) {
 	b.Reset()
 	bufPool.Put(b)
 }

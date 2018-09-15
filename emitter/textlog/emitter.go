@@ -1,44 +1,17 @@
 package textlog // import "github.com/vimeo/alog/emitter/textlog"
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/vimeo/alog/v2"
+	"github.com/vimeo/alog/v2/emitter/internal"
 )
 
 // Default is an alog.Emitter with some default options
 var Default = alog.New(alog.WithEmitter(Emitter(os.Stderr, WithShortFile(), WithDateFormat(time.RFC3339), WithUTC())))
-
-// out is a wrapper to guarantee serialized access to the inner Writer.
-type out struct {
-	sync.Mutex
-	io.Writer
-}
-
-func (o *out) Write(b []byte) (int, error) {
-	o.Lock()
-	n, err := o.Writer.Write(b)
-	o.Unlock()
-	return n, err
-}
-
-func itoa(w *bytes.Buffer, i int) {
-	buf := make([]byte, 16)
-	p := len(buf) - 1
-	for i >= 10 {
-		q := i / 10
-		buf[p] = byte('0' + i - q*10)
-		p--
-		i = q
-	}
-	buf[p] = byte('0' + i)
-	w.Write(buf[p:])
-}
 
 // Emitter emits log messages as plain text.
 //
@@ -49,10 +22,10 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 	for _, option := range opt {
 		option(o)
 	}
-	wOut := &out{Writer: w}
+	wOut := internal.NewSerializedWriter(w)
 	return alog.EmitterFunc(func(ctx context.Context, e *alog.Entry) {
-		m := getBuffer()
-		defer putBuffer(m)
+		m := internal.GetBuffer()
+		defer internal.PutBuffer(m)
 		m.WriteString(o.prefix)
 
 		// Quick-n-dirty custom formatting code
@@ -65,7 +38,7 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 		}
 		if o.flags&fileFlag != 0 && e.File != "" {
 			file := e.File
-			line := e.Line
+			line := uint(e.Line)
 			if o.flags&shortfileFlag != 0 {
 				for i := len(e.File) - 1; i > 0; i-- {
 					if file[i] == '/' {
@@ -76,7 +49,7 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 			}
 			m.WriteString(file)
 			m.WriteByte(':')
-			itoa(m, line)
+			internal.Itoa(m, line)
 			m.WriteString(": ")
 		}
 		if t := e.Tags; len(t) != 0 {

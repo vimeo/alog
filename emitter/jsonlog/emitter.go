@@ -6,39 +6,13 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"sync"
 
 	"github.com/vimeo/alog/v2"
+	"github.com/vimeo/alog/v2/emitter/internal"
 )
 
 // DefaultLogger is a *alog.Logger with some default options
 var DefaultLogger = alog.New(alog.WithEmitter(Emitter(os.Stderr, WithShortFile(), WithUTC())))
-
-// out is a wrapper to guarantee serialized access to the inner Writer.
-type out struct {
-	sync.Mutex
-	io.Writer
-}
-
-func (o *out) Write(b []byte) (int, error) {
-	o.Lock()
-	n, err := o.Writer.Write(b)
-	o.Unlock()
-	return n, err
-}
-
-func itoa(w *bytes.Buffer, i int) {
-	buf := make([]byte, 16)
-	p := len(buf) - 1
-	for i >= 10 {
-		q := i / 10
-		buf[p] = byte('0' + i - q*10)
-		p--
-		i = q
-	}
-	buf[p] = byte('0' + i)
-	w.Write(buf[p:])
-}
 
 func jsonString(w *bytes.Buffer, s string) {
 	enc := json.NewEncoder(w)
@@ -57,7 +31,7 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 		option(o)
 	}
 
-	wOut := &out{Writer: w}
+	wOut := internal.NewSerializedWriter(w)
 
 	timestampFormat := o.datefmt
 	useTimestamp := o.flags&timeFlag != 0
@@ -67,7 +41,7 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 	}
 	useTimestamp = timestampFormat != ""
 
-	b := getBuffer()
+	b := internal.GetBuffer()
 
 	timestampField := o.timestampField
 	if timestampField == "" {
@@ -93,11 +67,11 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 	jsonString(b, messageField)
 	messageField = b.String()
 
-	putBuffer(b)
+	internal.PutBuffer(b)
 
 	return alog.EmitterFunc(func(ctx context.Context, e *alog.Entry) {
-		b := getBuffer()
-		defer putBuffer(b)
+		b := internal.GetBuffer()
+		defer internal.PutBuffer(b)
 
 		b.WriteByte('{')
 
@@ -112,7 +86,7 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 		}
 		if o.flags&fileFlag != 0 && e.File != "" {
 			file := e.File
-			line := e.Line
+			line := uint(e.Line)
 			if o.flags&shortfileFlag != 0 {
 				for i := len(e.File) - 1; i > 0; i-- {
 					if file[i] == '/' {
@@ -123,12 +97,12 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 			}
 			b.WriteString(callerField)
 			b.WriteByte(':')
-			fb := getBuffer()
+			fb := internal.GetBuffer()
 			fb.WriteString(file)
 			fb.WriteByte(':')
-			itoa(fb, line)
+			internal.Itoa(fb, line)
 			jsonString(b, fb.String())
-			putBuffer(fb)
+			internal.PutBuffer(fb)
 			b.WriteString(", ")
 		}
 

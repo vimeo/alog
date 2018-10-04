@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/vimeo/alog/v2"
+	"github.com/vimeo/alog/v3"
 )
 
 func ExampleEmitter() {

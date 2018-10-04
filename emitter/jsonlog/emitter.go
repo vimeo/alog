@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/vimeo/alog/v2"
-	"github.com/vimeo/alog/v2/emitter/internal"
+	"github.com/vimeo/alog/v3"
+	"github.com/vimeo/alog/v3/emitter/internal"
 )
 
 // DefaultLogger is a *alog.Logger with some default options

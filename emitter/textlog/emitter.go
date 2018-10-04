@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/vimeo/alog/v2"
-	"github.com/vimeo/alog/v2/emitter/internal"
+	"github.com/vimeo/alog/v3"
+	"github.com/vimeo/alog/v3/emitter/internal"
 )
 
 // Default is an alog.Emitter with some default options

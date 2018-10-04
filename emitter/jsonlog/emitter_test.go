@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vimeo/alog/v2"
+	"github.com/vimeo/alog/v3"
 )
 
 var zeroTimeOpt = alog.OverrideTimestamp(func() time.Time { return time.Time{} })

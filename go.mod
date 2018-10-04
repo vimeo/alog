@@ -1,1 +1,1 @@
-module github.com/vimeo/alog/v2
+module github.com/vimeo/alog/v3

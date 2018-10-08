@@ -1,6 +1,6 @@
 // Package alog provides a simple logger that has minimal structuring passed via
 // context.Context.
-package alog // import "github.com/vimeo/alog"
+package alog
 
 import (
 	"context"

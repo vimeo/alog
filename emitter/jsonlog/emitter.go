@@ -1,4 +1,4 @@
-package jsonlog // import "github.com/vimeo/alog/emitter/jsonlog"
+package jsonlog
 
 import (
 	"bytes"

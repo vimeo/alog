@@ -1,4 +1,4 @@
-package textlog // import "github.com/vimeo/alog/emitter/textlog"
+package textlog
 
 import (
 	"context"

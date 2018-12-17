@@ -104,3 +104,22 @@ func TestIgnoredTag(t *testing.T) {
 		t.Fatalf("want: %#q, got: %#q", want, got)
 	}
 }
+
+func TestStdLogger(t *testing.T) {
+	buf := &bytes.Buffer{}
+	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
+		fmt.Fprintf(buf, "%s %v %s\n", e.Time.Format(time.RFC3339), e.Tags, e.Msg)
+	})
+
+	l := New(WithEmitter(dumper), OverrideTimestamp(func() time.Time { return time.Time{} }))
+
+	ctx := AddTags(context.Background(), "a", "b")
+	sl := l.StdLogger(ctx)
+	sl.Printf("test")
+
+	want := "0001-01-01T00:00:00Z [[a b]] test\n"
+	got := buf.String()
+	if got != want {
+		t.Fatalf("want: %#q, got: %#q", want, got)
+	}
+}

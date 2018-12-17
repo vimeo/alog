@@ -3,6 +3,7 @@ package alog
 import (
 	"context"
 	"fmt"
+	"log"
 	"runtime"
 	"time"
 )
@@ -93,4 +94,22 @@ func (l *Logger) Print(ctx context.Context, v ...interface{}) {
 // fmt.Printf.
 func (l *Logger) Printf(ctx context.Context, f string, v ...interface{}) {
 	l.Output(ctx, 2, fmt.Sprintf(f, v...))
+}
+
+type writerFunc func(p []byte) (int, error)
+
+func (w writerFunc) Write(p []byte) (int, error) {
+	return w(p)
+}
+
+// StdLogger returns a standard log.Logger that sends log messages to this
+// logger with the provided Context. The returned log.Logger should not be
+// modified.
+func (l *Logger) StdLogger(ctx context.Context) *log.Logger {
+	return log.New(writerFunc(func(p []byte) (int, error) {
+		// standard Logger always writes a trailing \n, so remove it
+		p = p[:len(p)-1]
+		l.Output(ctx, 4, string(p))
+		return len(p), nil
+	}), "", 0)
 }

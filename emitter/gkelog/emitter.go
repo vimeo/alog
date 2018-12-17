@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -276,7 +277,11 @@ func Emitter(opt ...Option) alog.Emitter {
 			jsonKey(b, "logging.googleapis.com/sourceLocation")
 			b.WriteByte('{')
 			jsonKey(b, "file")
-			jsonString(b, e.File)
+			f := e.File
+			if o.shortfile {
+				f = path.Base(f)
+			}
+			jsonString(b, f)
 			b.WriteString(", ")
 			jsonKey(b, "line")
 			b.WriteByte('"')

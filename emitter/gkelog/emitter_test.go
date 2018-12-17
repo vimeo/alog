@@ -15,6 +15,21 @@ import (
 
 var zeroTimeOpt = alog.OverrideTimestamp(func() time.Time { return time.Time{} })
 
+// Keep this function at the top of the file so that the line number doesn't change too often
+func TestCaller(t *testing.T) {
+	b := &bytes.Buffer{}
+	ctx := context.Background()
+	l := alog.New(alog.WithCaller(), alog.WithEmitter(Emitter(WithWriter(b), WithShortFile())), zeroTimeOpt)
+
+	l.Print(ctx, "test")
+
+	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/sourceLocation":{"file":"emitter_test.go", "line":"23"}, "message":"test"}` + "\n"
+	got := b.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
 func TestEmitter(t *testing.T) {
 	b := &bytes.Buffer{}
 	ctx := context.Background()

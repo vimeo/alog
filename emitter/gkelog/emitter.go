@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -160,6 +161,22 @@ func jsonTrace(ctx context.Context, w *bytes.Buffer) {
 	}
 }
 
+func sortedMapKeys(m map[string][]string) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+var skipHeaders = map[string]bool{
+	"Referer":               true,
+	"Referrer":              true,
+	"User-Agent":            true,
+	"X-Cloud-Trace-Context": true,
+}
+
 func jsonHTTPRequest(ctx context.Context, w *bytes.Buffer) {
 	var (
 		request *http.Request
@@ -234,53 +251,57 @@ func jsonHTTPRequest(ctx context.Context, w *bytes.Buffer) {
 		return
 	}
 
-	var headers []string
-	first := true
-	for k, v := range request.Header {
-		switch http.CanonicalHeaderKey(k) {
-		case "Referer", "Referrer", "User-Agent", "X-Cloud-Trace-Context":
-		default:
-			if len(v) > 0 {
-				if !first {
-					w.WriteString(", ")
-				} else {
-					first = false
-				}
-				headers = append(headers, http.CanonicalHeaderKey(k), v[0])
-			}
-		}
-	}
-	if len(headers) > 0 {
+	headerKeys := sortedMapKeys(request.Header)
+	if len(headerKeys) > 0 {
 		jsonKey(w, "httpHeaders")
 		w.WriteByte('{')
-		for i := 0; i < len(headers); i += 2 {
-			jsonKey(w, headers[i])
-			jsonString(w, headers[i+1])
+		i := 0
+		for _, h := range headerKeys {
+			if skipHeaders[h] {
+				continue
+			}
+			if i > 0 {
+				w.WriteString(", ")
+			}
+			jsonKey(w, h)
+			v := request.Header[h]
+			if len(v) > 1 {
+				w.WriteByte('[')
+			}
+			for j, v0 := range v {
+				if j > 0 {
+					w.WriteString(", ")
+				}
+				jsonString(w, v0)
+			}
+			if len(v) > 1 {
+				w.WriteByte(']')
+			}
+			i++
 		}
 		w.WriteByte('}')
 		w.WriteString(", ")
 	}
 
 	query := request.URL.Query()
-	if len(query) > 0 {
+	queryKeys := sortedMapKeys(query)
+	if len(queryKeys) > 0 {
 		jsonKey(w, "httpQuery")
 		w.WriteByte('{')
-		first = true
-		for k, v := range query {
-			if !first {
+		for i, q := range queryKeys {
+			if i > 0 {
 				w.WriteString(", ")
-			} else {
-				first = false
 			}
-			jsonKey(w, k)
+			jsonKey(w, q)
+			v := query[q]
 			if len(v) > 1 {
 				w.WriteByte('[')
 			}
-			for i, v0 := range v {
-				jsonString(w, v0)
-				if i < len(v)-1 {
+			for j, v0 := range v {
+				if j > 0 {
 					w.WriteString(", ")
 				}
+				jsonString(w, v0)
 			}
 			if len(v) > 1 {
 				w.WriteByte(']')

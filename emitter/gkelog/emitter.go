@@ -229,6 +229,67 @@ func jsonHTTPRequest(ctx context.Context, w *bytes.Buffer) {
 
 	w.WriteByte('}')
 	w.WriteString(", ")
+
+	if request == nil {
+		return
+	}
+
+	var headers []string
+	first := true
+	for k, v := range request.Header {
+		switch http.CanonicalHeaderKey(k) {
+		case "Referer", "Referrer", "User-Agent", "X-Cloud-Trace-Context":
+		default:
+			if len(v) > 0 {
+				if !first {
+					w.WriteString(", ")
+				} else {
+					first = false
+				}
+				headers = append(headers, http.CanonicalHeaderKey(k), v[0])
+			}
+		}
+	}
+	if len(headers) > 0 {
+		jsonKey(w, "httpHeaders")
+		w.WriteByte('{')
+		for i := 0; i < len(headers); i += 2 {
+			jsonKey(w, headers[i])
+			jsonString(w, headers[i+1])
+		}
+		w.WriteByte('}')
+		w.WriteString(", ")
+	}
+
+	query := request.URL.Query()
+	if len(query) > 0 {
+		jsonKey(w, "httpQuery")
+		w.WriteByte('{')
+		first = true
+		for k, v := range query {
+			if !first {
+				w.WriteString(", ")
+			} else {
+				first = false
+			}
+			jsonKey(w, k)
+			if len(v) > 1 {
+				w.WriteByte('[')
+			}
+			for i, v0 := range v {
+				jsonString(w, v0)
+				if i < len(v)-1 {
+					w.WriteString(", ")
+				}
+			}
+			if len(v) > 1 {
+				w.WriteByte(']')
+			}
+		}
+		w.WriteByte('}')
+		w.WriteString(", ")
+	}
+
 }
 
 // Emitter emits log messages as single lines of JSON.

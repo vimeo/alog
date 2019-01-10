@@ -200,3 +200,24 @@ func TestLatency(t *testing.T) {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
 }
+
+func TestWriters(t *testing.T) {
+	b0 := &bytes.Buffer{}
+	b1 := &bytes.Buffer{}
+	ctx := context.Background()
+	l := alog.New(alog.WithEmitter(Emitter(WithWriters(b0, b1))), zeroTimeOpt)
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rctx := WithRequestStatus(WithRequest(ctx, req), http.StatusOK)
+
+	b0.WriteString("b0: ")
+	l.Print(rctx, "test")
+	b1.WriteString("b1: ")
+	l.Print(ctx, "test")
+
+	want := `b0: {"time":"0001-01-01T00:00:00Z", "httpRequest":{"status":200, "requestMethod":"GET", "requestUrl":"/test"}, "message":"test"}` + "\n" + `b1: {"time":"0001-01-01T00:00:00Z", "message":"test"}` + "\n"
+	got := b0.String() + b1.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}

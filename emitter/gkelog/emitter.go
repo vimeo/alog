@@ -322,11 +322,15 @@ func Emitter(opt ...Option) alog.Emitter {
 	for _, option := range opt {
 		option(o)
 	}
-	if o.writer == nil {
-		o.writer = os.Stderr
+	if o.reqWriter == nil {
+		o.reqWriter = os.Stdout
+	}
+	if o.appWriter == nil {
+		o.appWriter = os.Stderr
 	}
 
-	wOut := internal.NewSerializedWriter(o.writer)
+	wReq := internal.NewSerializedWriter(o.reqWriter)
+	wApp := internal.NewSerializedWriter(o.appWriter)
 
 	return alog.EmitterFunc(func(ctx context.Context, e *alog.Entry) {
 		b := internal.GetBuffer()
@@ -378,6 +382,10 @@ func Emitter(opt ...Option) alog.Emitter {
 
 		b.WriteString("}\n")
 
-		wOut.Write(b.Bytes())
+		if ctx.Value(requestKey) == nil {
+			wApp.Write(b.Bytes())
+		} else {
+			wReq.Write(b.Bytes())
+		}
 	})
 }

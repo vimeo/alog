@@ -75,6 +75,20 @@ func TestSeverity(t *testing.T) {
 	}
 }
 
+func TestLogSeverity(t *testing.T) {
+	b := &bytes.Buffer{}
+	ctx := context.Background()
+	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
+
+	LogInfo(ctx, l, "test")
+
+	want := `{"time":"0001-01-01T00:00:00Z", "severity":"INFO", "message":"test"}` + "\n"
+	got := b.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
 func TestRequest(t *testing.T) {
 	b := &bytes.Buffer{}
 	ctx := context.Background()

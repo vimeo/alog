@@ -30,19 +30,6 @@ var (
 	spanKey     = contextKey("span")
 )
 
-// Severity levels
-const (
-	SeverityDefault   = "DEFAULT"   // The log entry has no assigned severity level.
-	SeverityDebug     = "DEBUG"     // Debug or trace information.
-	SeverityInfo      = "INFO"      // Routine information, such as ongoing status or performance.
-	SeverityNotice    = "NOTICE"    // Normal but significant events, such as start up, shut down, or a configuration change.
-	SeverityWarning   = "WARNING"   // Warning events might cause problems.
-	SeverityError     = "ERROR"     // Error events are likely to cause problems.
-	SeverityCritical  = "CRITICAL"  // Critical events cause more severe problems or outages.
-	SeverityAlert     = "ALERT"     // A person must take an action immediately.
-	SeverityEmergency = "EMERGENCY" // One or more systems are unusable.
-)
-
 // WithSeverity returns a copy of parent with the specified severity value.
 func WithSeverity(parent context.Context, severity string) context.Context {
 	return context.WithValue(parent, severityKey, severity)

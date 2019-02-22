@@ -68,7 +68,7 @@ func (l *Logger) Output(ctx context.Context, calldepth int, msg string) {
 	}
 	e := Entry{
 		Time: l.now(),
-		Tags: fromContext(ctx),
+		Tags: tagsFromContext(ctx),
 		Msg:  msg,
 	}
 

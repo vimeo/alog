@@ -108,7 +108,14 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 
 		if len(e.Tags) > 0 {
 			b.WriteString(`"tags":{`)
+			tagClean := make(map[string]int, len(e.Tags))
 			for i, tag := range e.Tags {
+				tagClean[tag[0]] = i
+			}
+			for i, tag := range e.Tags {
+				if tagClean[tag[0]] != i {
+					continue
+				}
 				jsonString(b, tag[0])
 				b.WriteByte(':')
 				jsonString(b, tag[1])

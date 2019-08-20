@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/vimeo/alog/v3"
+	"github.com/vimeo/alog/v3/leveled"
 )
 
 // Severity levels
@@ -57,4 +58,34 @@ func LogError(ctx context.Context, logger *alog.Logger, f string, v ...interface
 // LogCritical writes a log entry using SeverityCritical
 func LogCritical(ctx context.Context, logger *alog.Logger, f string, v ...interface{}) {
 	logSeverity(ctx, logger, SeverityCritical, f, v...)
+}
+
+type severityLogger struct {
+	*alog.Logger
+}
+
+func NewSeverityLogger(logger *alog.Logger) leveled.Logger {
+	return &severityLogger{
+		Logger: logger,
+	}
+}
+
+func (sl *severityLogger) Debug(ctx context.Context, f string, v ...interface{}) {
+	logSeverity(ctx, sl.Logger, SeverityDebug, f, v...)
+}
+
+func (sl *severityLogger) Info(ctx context.Context, f string, v ...interface{}) {
+	logSeverity(ctx, sl.Logger, SeverityInfo, f, v...)
+}
+
+func (sl *severityLogger) Warning(ctx context.Context, f string, v ...interface{}) {
+	logSeverity(ctx, sl.Logger, SeverityWarning, f, v...)
+}
+
+func (sl *severityLogger) Error(ctx context.Context, f string, v ...interface{}) {
+	logSeverity(ctx, sl.Logger, SeverityError, f, v...)
+}
+
+func (sl *severityLogger) Critical(ctx context.Context, f string, v ...interface{}) {
+	logSeverity(ctx, sl.Logger, SeverityCritical, f, v...)
 }

@@ -120,6 +120,18 @@ func jsonKey(w *bytes.Buffer, s string) {
 	w.WriteByte(':')
 }
 
+var reservedKeys = map[string]bool{
+	"httpHeaders":                           true,
+	"httpQuery":                             true,
+	"httpRequest":                           true,
+	"logging.googleapis.com/sourceLocation": true,
+	"logging.googleapis.com/spanId":         true,
+	"logging.googleapis.com/trace":          true,
+	"message":                               true,
+	"severity":                              true,
+	"time":                                  true,
+}
+
 func jsonTrace(ctx context.Context, w *bytes.Buffer) {
 	var (
 		trace string
@@ -340,7 +352,14 @@ func Emitter(opt ...Option) alog.Emitter {
 
 		jsonTrace(ctx, b)
 
-		for _, tag := range e.Tags {
+		tagClean := make(map[string]int, len(e.Tags))
+		for i, tag := range e.Tags {
+			tagClean[tag[0]] = i
+		}
+		for i, tag := range e.Tags {
+			if tagClean[tag[0]] != i || reservedKeys[tag[0]] {
+				continue
+			}
 			jsonKey(b, tag[0])
 			jsonString(b, tag[1])
 			b.WriteString(", ")

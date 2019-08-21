@@ -235,3 +235,33 @@ func TestWriters(t *testing.T) {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
 }
+
+func TestDuplicateTags(t *testing.T) {
+	b := &bytes.Buffer{}
+	ctx := context.Background()
+	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
+
+	ctx = alog.AddTags(ctx, "a", "v1", "a", "v2")
+	l.Print(ctx, "test")
+
+	want := `{"time":"0001-01-01T00:00:00Z", "a":"v2", "message":"test"}` + "\n"
+	got := b.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestReservedKeys(t *testing.T) {
+	b := &bytes.Buffer{}
+	ctx := context.Background()
+	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
+
+	ctx = alog.AddTags(ctx, "time", "2019-08-21T19:02:23Z")
+	l.Print(ctx, "test")
+
+	want := `{"time":"0001-01-01T00:00:00Z", "message":"test"}` + "\n"
+	got := b.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}

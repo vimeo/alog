@@ -1,4 +1,4 @@
-// Package testlog provides emitter options for tests
+// Package testlog provides emitter option for tests
 package testlog
 
 import (

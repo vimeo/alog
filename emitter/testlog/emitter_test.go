@@ -1,10 +1,11 @@
 package testlog
 
-import "testing"
+import (
+	"context"
+	"testing"
 
-import "context"
-
-import "github.com/vimeo/alog/v3"
+	"github.com/vimeo/alog/v3"
+)
 
 func TestEmitter(t *testing.T) {
 

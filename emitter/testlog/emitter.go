@@ -10,7 +10,7 @@ import (
 )
 
 // DefaultLogger should be used for testing only. It returns a logger
-// that will log the file path, message, and tags
+// that will log the full caller file path and line-number, message, and tags
 func DefaultLogger(t testing.TB, opt ...Option) *alog.Logger {
 	return alog.New(alog.WithCaller(), alog.WithEmitter(Emitter(t, opt...)))
 }

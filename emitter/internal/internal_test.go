@@ -9,27 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-	"unsafe"
 )
-
-func TestPool(t *testing.T) {
-	b1 := GetBuffer()
-	bp1 := uintptr(unsafe.Pointer(b1))
-	b2 := GetBuffer()
-	bp2 := uintptr(unsafe.Pointer(b2))
-	PutBuffer(b1)
-	b := GetBuffer()
-	bp := uintptr(unsafe.Pointer(b))
-	if bp != bp1 {
-		t.Errorf("%v != %v", bp1, bp2)
-	}
-	PutBuffer(b2)
-	b = GetBuffer()
-	bp = uintptr(unsafe.Pointer(b))
-	if bp != bp2 {
-		t.Errorf("%v != %v", bp1, bp2)
-	}
-}
 
 func TestItoa(t *testing.T) {
 	b := &bytes.Buffer{}
@@ -48,7 +28,7 @@ type nonConcurrentWriter struct {
 
 func (w *nonConcurrentWriter) Write(b []byte) (int, error) {
 	if !atomic.CompareAndSwapUint64(&w.cas, 0, 1) {
-		panic("unsynchonized entry")
+		panic("unsynchronized entry")
 	}
 	defer atomic.CompareAndSwapUint64(&w.cas, 1, 0)
 
@@ -69,12 +49,12 @@ func writeStuffConcurrently(w io.Writer, size int, count int) (err error) {
 	}
 	for i := 0; i < count; i++ {
 		go func() {
+			defer wg.Done()
 			defer func() {
 				if p := recover(); p != nil {
 					setError(p)
 				}
 			}()
-			defer wg.Done()
 			w.Write(b)
 		}()
 	}

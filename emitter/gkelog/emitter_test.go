@@ -104,7 +104,7 @@ func TestRequest(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "httpRequest":{"requestMethod":"GET", "requestUrl":"/test/endpoint?q=1&c=pink", "userAgent":"curl/7.54.0", "referer":"https://vimeo.com"}, "httpHeaders":{"Content-Type":"text/plain", "Dnt":"1"}, "httpQuery":{"c":"pink", "q":"1"}, "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "httpRequest":{"requestMethod":"GET", "requestUrl":"/test/endpoint?q=1&c=pink", "userAgent":"curl/7.54.0", "referer":"https://vimeo.com"}, "httpHeaders":{"Content-Type":"text/plain", "Dnt":"1"}, "httpQuery":{"c":"pink", "q":"1"}, "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "logging.googleapis.com/trace_sampled":true, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -120,7 +120,7 @@ func TestTrace(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "logging.googleapis.com/trace_sampled":true, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -156,7 +156,7 @@ func TestSpan(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "logging.googleapis.com/trace_sampled":true, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -176,7 +176,7 @@ func TestRequestTrace(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/trace":"a2fbf27a2ed90077e0d4af0e40a241f9", "logging.googleapis.com/spanId":"b01d4e1cf2bd7f4d", "logging.googleapis.com/trace_sampled":true, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)

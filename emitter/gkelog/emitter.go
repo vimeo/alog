@@ -132,30 +132,41 @@ var reservedKeys = map[string]bool{
 	"time":                                  true,
 }
 
-func jsonTrace(ctx context.Context, w *bytes.Buffer) {
-	var (
-		trace string
-		span  string
-	)
+func defaultTraceExtractor(ctx context.Context) SpanContext {
+	sctx := SpanContext{}
 
 	traceV := ctx.Value(traceKey)
 	if traceV != nil {
-		trace = traceV.(string)
+		sctx.TraceID = traceV.(string)
+		sctx.Sampled = true
 	}
 	spanV := ctx.Value(spanKey)
 	if spanV != nil {
-		span = spanV.(string)
+		sctx.SpanID = spanV.(string)
+		sctx.Sampled = true
 	}
+	return sctx
+}
 
-	if trace != "" {
+func jsonTrace(ctx context.Context, o *Options, w *bytes.Buffer) {
+	if o.spanExtractor == nil {
+		return
+	}
+	sctx := o.spanExtractor(ctx)
+	if sctx.TraceID != "" {
 		jsonKey(w, "logging.googleapis.com/trace")
-		jsonString(w, trace)
+		jsonString(w, sctx.TraceID)
 		w.WriteString(", ")
 	}
 
-	if span != "" {
+	if sctx.SpanID != "" {
 		jsonKey(w, "logging.googleapis.com/spanId")
-		jsonString(w, span)
+		jsonString(w, sctx.SpanID)
+		w.WriteString(", ")
+	}
+	if sctx.TraceID != "" || sctx.SpanID != "" {
+		jsonKey(w, "logging.googleapis.com/trace_sampled")
+		w.WriteString(strconv.FormatBool(sctx.Sampled))
 		w.WriteString(", ")
 	}
 }
@@ -317,7 +328,9 @@ func jsonHTTPRequest(ctx context.Context, w *bytes.Buffer) {
 // Logs are output to w. Every entry generates a single Write call to w, and
 // calls are serialized.
 func Emitter(opt ...Option) alog.Emitter {
-	o := new(Options)
+	o := &Options{
+		spanExtractor: defaultTraceExtractor,
+	}
 	for _, option := range opt {
 		option(o)
 	}
@@ -350,7 +363,7 @@ func Emitter(opt ...Option) alog.Emitter {
 
 		jsonHTTPRequest(ctx, b)
 
-		jsonTrace(ctx, b)
+		jsonTrace(ctx, o, b)
 
 		tagClean := make(map[string]int, len(e.Tags))
 		for i, tag := range e.Tags {

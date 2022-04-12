@@ -300,18 +300,14 @@ func jsonHTTPRequest(ctx context.Context, w *bytes.Buffer) {
 			}
 			jsonKey(w, q)
 			v := query[q]
-			if len(v) > 1 {
-				w.WriteByte('[')
-			}
+			w.WriteByte('[')
 			for j, v0 := range v {
 				if j > 0 {
 					w.WriteString(", ")
 				}
 				jsonString(w, v0)
 			}
-			if len(v) > 1 {
-				w.WriteByte(']')
-			}
+			w.WriteByte(']')
 		}
 		w.WriteByte('}')
 		w.WriteString(", ")

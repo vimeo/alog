@@ -359,14 +359,18 @@ func Emitter(opt ...Option) alog.Emitter {
 
 		tagClean := make(map[string]int, len(e.Tags))
 		for i, tag := range e.Tags {
-			tagClean[tag[0]] = i
+			tagClean[tag.Key] = i
 		}
 		for i, tag := range e.Tags {
-			if tagClean[tag[0]] != i || reservedKeys[tag[0]] {
+			if tagClean[tag.Key] != i || reservedKeys[tag.Key] {
 				continue
 			}
-			jsonKey(b, tag[0])
-			jsonString(b, tag[1])
+			jsonKey(b, tag.Key)
+			if tag.IsJSON {
+				b.WriteString(tag.Value)
+			} else {
+				jsonString(b, tag.Value)
+			}
 			b.WriteString(", ")
 		}
 

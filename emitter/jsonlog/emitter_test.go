@@ -107,12 +107,12 @@ func TestDuplicateTag(t *testing.T) {
 	l := alog.New(alog.WithEmitter(Emitter(b, WithDateFormat(""))))
 
 	// If a caller adds some tags...
-	ctx := alog.AddTags(context.Background(), "a", "1", "b", "2")
+	ctx := alog.AddTags(context.Background(), "a", "1", "b", "2", "c", `{"x": 1}`)
 	// And then adds another tag with the same key...
 	ctx = alog.AddTags(ctx, "a", "3")
 	// Make sure only the latest one shows up...
 	l.Print(ctx, "")
-	const want = `{"tags":{"b":"2", "a":"3"}, "message":""}` + "\n"
+	const want = `{"tags":{"b":"2", "c":{"x": 1}, "a":"3"}, "message":""}` + "\n"
 	if got := b.String(); got != want {
 		t.Errorf("got: %#q, want: %#q", got, want)
 	}
@@ -122,9 +122,15 @@ func TestDuplicateTag(t *testing.T) {
 		Tags    struct {
 			A string
 			B string
+			C struct {
+				X int
+			}
 		}
 	}{}
 	if err := json.Unmarshal(b.Bytes(), &tgt); err != nil {
 		t.Error(err)
+	}
+	if tgt.Tags.C.X != 1 {
+		t.Errorf("expected X to be 1, instead: %d", tgt.Tags.C.X)
 	}
 }

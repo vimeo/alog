@@ -13,12 +13,12 @@ func Example_levels() {
 	ctx := context.Background()
 	l := New(WithEmitter(EmitterFunc(func(ctx context.Context, e *Entry) {
 		for _, p := range e.Tags {
-			if p[0] != "level" {
+			if p.Key != "level" {
 				continue
 			}
-			switch p[1] {
+			switch p.Value {
 			case "error":
-				fmt.Println("ERROR", e.Tags, e.Msg)
+				fmt.Println("ERROR", tagsText(e.Tags), e.Msg)
 				fallthrough
 			case "info":
 				fallthrough
@@ -40,7 +40,7 @@ func Example_levels() {
 
 func ExampleWithEmitter() {
 	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
-		fmt.Printf("%v %s\n", e.Tags, e.Msg)
+		fmt.Printf("%s %s\n", tagsText(e.Tags), e.Msg)
 	})
 	ctx := context.Background()
 	l := New(WithEmitter(dumper))
@@ -89,12 +89,21 @@ func TestNilOK(t *testing.T) {
 	l.Print(ctx, "this shouldn't explode")
 }
 
+func tagsText(tags []Tag) string {
+	str := "["
+	for _, t := range tags {
+		str += fmt.Sprintf("[%s %s]", t.Key, t.Value)
+	}
+	str += "]"
+	return str
+}
+
 func TestIgnoredTag(t *testing.T) {
 	t.Parallel()
 	buf := &bytes.Buffer{}
 	want := "[[a b]] test\n"
 	l := New(WithEmitter(EmitterFunc(func(ctx context.Context, e *Entry) {
-		fmt.Fprintf(buf, "%v %s\n", e.Tags, e.Msg)
+		fmt.Fprintf(buf, "%s %s\n", tagsText(e.Tags), e.Msg)
 	})))
 
 	ctx := AddTags(context.Background(), "a", "b", "unpaired")
@@ -108,7 +117,7 @@ func TestIgnoredTag(t *testing.T) {
 func TestStdLogger(t *testing.T) {
 	buf := &bytes.Buffer{}
 	dumper := EmitterFunc(func(ctx context.Context, e *Entry) {
-		fmt.Fprintf(buf, "%s %v %s\n", e.Time.Format(time.RFC3339), e.Tags, e.Msg)
+		fmt.Fprintf(buf, "%s %s %s\n", e.Time.Format(time.RFC3339), tagsText(e.Tags), e.Msg)
 	})
 
 	l := New(WithEmitter(dumper), OverrideTimestamp(func() time.Time { return time.Time{} }))

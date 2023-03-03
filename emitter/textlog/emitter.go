@@ -58,9 +58,9 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 				if i != 0 {
 					m.WriteByte(' ')
 				}
-				m.WriteString(p[0])
+				m.WriteString(p.Key)
 				m.WriteByte('=')
-				m.WriteString(p[1])
+				m.WriteString(p.Value)
 			}
 			m.WriteString("] ")
 		}

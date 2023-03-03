@@ -3,6 +3,7 @@ package gkelog
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -23,7 +24,7 @@ func TestCaller(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/sourceLocation":{"file":"emitter_test.go", "line":"24"}, "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "logging.googleapis.com/sourceLocation":{"file":"emitter_test.go", "line":"25"}, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -49,11 +50,14 @@ func TestLabels(t *testing.T) {
 	ctx := context.Background()
 	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
 
-	ctx = alog.AddTags(ctx, "allthese", "tags", "andanother", "tag")
+	ctx = alog.AddTags(ctx, "allthese", "tags", "andanother", "tag", "struct", `{"x": {"y": 2}, "z": 1}`, "invalidJSON", `{"x}`)
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "struct":{"x": {"y": 2}, "z": 1}, "invalidJSON":"{\"x}", "message":"test"}` + "\n"
 	got := b.String()
+	if !json.Valid([]byte(got)) {
+		t.Errorf("%s is not valid JSON", got)
+	}
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}

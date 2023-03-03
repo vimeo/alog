@@ -366,7 +366,11 @@ func Emitter(opt ...Option) alog.Emitter {
 				continue
 			}
 			jsonKey(b, tag[0])
-			jsonString(b, tag[1])
+			if json.Valid([]byte(tag[1])) {
+				b.WriteString(tag[1])
+			} else {
+				jsonString(b, tag[1])
+			}
 			b.WriteString(", ")
 		}
 

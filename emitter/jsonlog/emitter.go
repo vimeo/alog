@@ -106,19 +106,48 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 			b.WriteString(", ")
 		}
 
+		tagPositions := make(map[string]int, len(e.Tags))
+		for i, tag := range e.Tags {
+			tagPositions[tag[0]] = i
+		}
+
 		if len(e.Tags) > 0 {
 			b.WriteString(`"tags":{`)
-			tagClean := make(map[string]int, len(e.Tags))
 			for i, tag := range e.Tags {
-				tagClean[tag[0]] = i
-			}
-			for i, tag := range e.Tags {
-				if tagClean[tag[0]] != i {
+				if tagPositions[tag[0]] != i {
 					continue
 				}
 				jsonString(b, tag[0])
 				b.WriteByte(':')
 				jsonString(b, tag[1])
+				if i < len(e.Tags)-1 {
+					b.WriteString(", ")
+				}
+			}
+			b.WriteString("}, ")
+		}
+
+		if len(e.STags) > 0 {
+			sTagPositions := make(map[string]int, len(e.STags))
+			for i, tag := range e.STags {
+				sTagPositions[tag.Key] = i
+			}
+			b.WriteString(`"sTags":{`)
+			for i, tag := range e.STags {
+				_, asStringTag := tagPositions[tag.Key]
+				if sTagPositions[tag.Key] != i || asStringTag {
+					continue
+				}
+
+				jsonString(b, tag.Key)
+				b.WriteByte(':')
+
+				marshalled, marshalErr := json.Marshal(tag.Val)
+				if marshalErr == nil {
+					b.Write(marshalled)
+				} else {
+					jsonString(b, "json marshal err: "+marshalErr.Error())
+				}
 				if i < len(e.Tags)-1 {
 					b.WriteString(", ")
 				}

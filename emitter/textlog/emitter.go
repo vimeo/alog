@@ -2,6 +2,7 @@ package textlog
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -61,6 +62,18 @@ func Emitter(w io.Writer, opt ...Option) alog.Emitter {
 				m.WriteString(p[0])
 				m.WriteByte('=')
 				m.WriteString(p[1])
+			}
+			m.WriteString("] ")
+		}
+		if t := e.STags; len(t) != 0 {
+			m.WriteByte('[')
+			for i, p := range t {
+				if i != 0 {
+					m.WriteByte(' ')
+				}
+				m.WriteString(p.Key)
+				m.WriteByte('=')
+				fmt.Fprintf(m, "%+v", p.Val)
 			}
 			m.WriteString("] ")
 		}

@@ -49,10 +49,19 @@ func TestLabels(t *testing.T) {
 	ctx := context.Background()
 	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
 
+	structured := alog.STag{
+		Key: "structured",
+		Val: struct {
+			X int `json:"x"`
+		}{
+			X: 1,
+		},
+	}
 	ctx = alog.AddTags(ctx, "allthese", "tags", "andanother", "tag")
+	ctx = alog.AddStructuredTags(ctx, structured)
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "structured":{"x":1}, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)

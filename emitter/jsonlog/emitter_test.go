@@ -17,13 +17,25 @@ func TestEmitter(t *testing.T) {
 	ctx := context.Background()
 	l := alog.New(alog.WithCaller(), alog.WithEmitter(Emitter(b, WithShortFile())), zeroTimeOpt)
 
+	structuredVal := struct {
+		X int `json:"x"`
+		Y int `json:"why"`
+	}{
+		X: 1,
+		Y: 42,
+	}
+
 	ctx = alog.AddTags(ctx, "allthese", "tags", "andanother", "tag")
+	ctx = alog.AddStructuredTags(ctx, alog.STag{Key: "structured", Val: structuredVal}, alog.STag{Key: "other-struct", Val: structuredVal})
 	l.Print(ctx, "test")
 
-	want := `{"timestamp":"0001-01-01T00:00:00.000000000Z", "caller":"emitter_test.go:21", "tags":{"allthese":"tags", "andanother":"tag"}, "message":"test"}` + "\n"
+	want := `{"timestamp":"0001-01-01T00:00:00.000000000Z", "caller":"emitter_test.go:30", "tags":{"allthese":"tags", "andanother":"tag"}, "sTags":{"structured":{"x":1,"why":42}, "other-struct":{"x":1,"why":42}}, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+	if !json.Valid([]byte(got)) {
+		t.Errorf("invalid json: %s", got)
 	}
 }
 
@@ -53,7 +65,7 @@ func TestCustomFieldNames(t *testing.T) {
 
 	l.Print(ctx, "test")
 
-	want := `{"ts":"0001-01-01T00:00:00.000000000Z", "called_at":"emitter_test.go:54", "msg":"test"}` + "\n"
+	want := `{"ts":"0001-01-01T00:00:00.000000000Z", "called_at":"emitter_test.go:66", "msg":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)

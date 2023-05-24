@@ -2,7 +2,7 @@
 
 _"another logger!"_
 
-[![GoDoc](https://godoc.org/github.com/vimeo/alog?status.svg)](https://godoc.org/github.com/vimeo/alog)
+[![Go Reference](https://pkg.go.dev/badge/github.com/vimeo/alog/v3.svg)](https://pkg.go.dev/github.com/vimeo/alog/v3)
 
 Alog is a logging package aiming to hit a sweet spot between API surface,
 flexibility, and structure.

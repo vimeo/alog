@@ -29,6 +29,6 @@ func Emitter(t testing.TB, opt ...Option) alog.Emitter {
 		if o.shortfile {
 			e.File = path.Base(e.File)
 		}
-		t.Logf("%s %s %v", e.File, e.Msg, e.Tags)
+		t.Logf("%s %s %v %+v", e.File, e.Msg, e.Tags, e.STags)
 	})
 }

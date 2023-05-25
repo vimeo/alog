@@ -357,16 +357,41 @@ func Emitter(opt ...Option) alog.Emitter {
 
 		jsonTrace(ctx, o, b)
 
-		tagClean := make(map[string]int, len(e.Tags))
-		for i, tag := range e.Tags {
-			tagClean[tag[0]] = i
+		// Get all the tags and take their positions in the list.  If there are
+		// tags with the same key (first element of the string tuple) the latest
+		// tag will take precedence.
+		tagPositions := make(map[string]int, len(e.Tags))
+		for i, t := range e.Tags {
+			tagPositions[t[0]] = i
 		}
 		for i, tag := range e.Tags {
-			if tagClean[tag[0]] != i || reservedKeys[tag[0]] {
+			if tagPositions[tag[0]] != i || reservedKeys[tag[0]] {
 				continue
 			}
 			jsonKey(b, tag[0])
 			jsonString(b, tag[1])
+			b.WriteString(", ")
+		}
+
+		sTagPositions := make(map[string]int, len(e.STags))
+		for i, t := range e.STags {
+			sTagPositions[t.Key] = i
+		}
+		for i, sTag := range e.STags {
+			_, asStringTag := tagPositions[sTag.Key] // has this already been used as a string tag?
+			if tagPositions[sTag.Key] != i || asStringTag || reservedKeys[sTag.Key] {
+				continue
+			}
+
+			jsonKey(b, sTag.Key)
+
+			marshalled, marshalErr := json.Marshal(sTag.Val)
+			if marshalErr == nil {
+				b.Write(marshalled)
+			} else {
+				jsonString(b, "json marshal err: "+marshalErr.Error())
+			}
+
 			b.WriteString(", ")
 		}
 

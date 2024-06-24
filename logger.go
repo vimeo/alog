@@ -67,9 +67,10 @@ func (l *Logger) Output(ctx context.Context, calldepth int, msg string) {
 		l.now = time.Now
 	}
 	e := Entry{
-		Time: l.now(),
-		Tags: fromContext(ctx),
-		Msg:  msg,
+		Time:  l.now(),
+		Tags:  tagsFromContext(ctx),
+		STags: sTagsFromContext(ctx),
+		Msg:   msg,
 	}
 
 	if l.caller {

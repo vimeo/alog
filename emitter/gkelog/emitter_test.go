@@ -57,11 +57,21 @@ func TestLabels(t *testing.T) {
 			X: 1,
 		},
 	}
+
+	structured2 := alog.STag{
+		Key: "structured-again",
+		Val: struct {
+			Y string `json:"val"`
+		}{
+			Y: "foo",
+		},
+	}
+
 	ctx = alog.AddTags(ctx, "allthese", "tags", "andanother", "tag")
-	ctx = alog.AddStructuredTags(ctx, structured)
+	ctx = alog.AddStructuredTags(ctx, structured, structured2)
 	l.Print(ctx, "test")
 
-	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "structured":{"x":1}, "message":"test"}` + "\n"
+	want := `{"time":"0001-01-01T00:00:00Z", "allthese":"tags", "andanother":"tag", "structured":{"x":1}, "structured-again":{"val":"foo"}, "message":"test"}` + "\n"
 	got := b.String()
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)

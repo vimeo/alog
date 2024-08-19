@@ -379,7 +379,7 @@ func Emitter(opt ...Option) alog.Emitter {
 		}
 		for i, sTag := range e.STags {
 			_, asStringTag := tagPositions[sTag.Key] // has this already been used as a string tag?
-			if tagPositions[sTag.Key] != i || asStringTag || reservedKeys[sTag.Key] {
+			if sTagPositions[sTag.Key] != i || asStringTag || reservedKeys[sTag.Key] {
 				continue
 			}
 

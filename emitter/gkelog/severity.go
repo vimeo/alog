@@ -21,13 +21,32 @@ const (
 	SeverityEmergency = "EMERGENCY" // One or more systems are unusable.
 )
 
+// the priority of each severity level
+var severityPriority map[string]uint8 = map[string]uint8{
+	SeverityDebug:     0,
+	SeverityInfo:      1,
+	SeverityNotice:    2,
+	SeverityWarning:   3,
+	SeverityError:     4,
+	SeverityCritical:  5,
+	SeverityAlert:     6,
+	SeverityEmergency: 7,
+	SeverityDefault:   8, // default will almost always log and should probably not be used
+}
+
 // Separate private function so that LogSeverity and the other logs functions
 // will have the same stack frame depth and thus use the same calldepth value.
 // See https://golang.org/pkg/runtime/#Caller and
 // https://godoc.org/github.com/vimeo/alog#Logger.Output
 func logSeverity(ctx context.Context, logger *alog.Logger, s string, f string, v ...interface{}) {
-	ctx = WithSeverity(ctx, s)
-	logger.Output(ctx, 3, fmt.Sprintf(f, v...))
+	minSeverity := uint8(0)
+	if minSeverityVal := ctx.Value(minSeverityKey); minSeverityVal != nil {
+		minSeverity = severityPriority[minSeverityVal.(string)]
+	}
+	if severityPriority[s] >= minSeverity {
+		ctx = WithSeverity(ctx, s)
+		logger.Output(ctx, 3, fmt.Sprintf(f, v...))
+	}
 }
 
 // LogSeverity writes a log entry using the specified severity

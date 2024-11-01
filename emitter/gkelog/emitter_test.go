@@ -108,6 +108,21 @@ func TestLogSeverity(t *testing.T) {
 	}
 }
 
+func TestMinLogSeverity(t *testing.T) {
+	b := &bytes.Buffer{}
+	ctx := WithMinSeverity(context.Background(), SeverityWarning)
+	l := alog.New(alog.WithEmitter(Emitter(WithWriter(b))), zeroTimeOpt)
+
+	LogInfo(ctx, l, "NOT LOGGED") // because Info is lower than Warning
+	LogError(ctx, l, "LOGGED")
+
+	want := `{"time":"0001-01-01T00:00:00Z", "severity":"ERROR", "message":"LOGGED"}` + "\n"
+	got := b.String()
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
 func TestRequest(t *testing.T) {
 	b := &bytes.Buffer{}
 	ctx := context.Background()

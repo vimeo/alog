@@ -21,3 +21,18 @@ func TestLogger(t *testing.T) {
 		t.Errorf("got: %#q, want: %#q", got, want)
 	}
 }
+
+func TestLogLevels(t *testing.T) {
+	b := &bytes.Buffer{}
+	l := Filtered(alog.New(alog.WithEmitter(textlog.Emitter(b))))
+	l.SetMinLevel(Warning)
+
+	ctx := context.Background()
+	ctx = alog.AddTags(ctx, "key", "value")
+	l.Error(ctx, "I get logged")
+	l.Debug(ctx, "I don't get logged")
+	const want = `[key=value level=error] I get logged` + "\n"
+	if got := b.String(); got != want {
+		t.Errorf("got: %#q, want: %#q", got, want)
+	}
+}

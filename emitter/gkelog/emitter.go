@@ -22,17 +22,24 @@ var DefaultLogger = alog.New(alog.WithEmitter(Emitter()))
 type contextKey string
 
 var (
-	severityKey = contextKey("severity")
-	requestKey  = contextKey("request")
-	statusKey   = contextKey("status")
-	latencyKey  = contextKey("latency")
-	traceKey    = contextKey("trace")
-	spanKey     = contextKey("span")
+	severityKey    = contextKey("severity")
+	minSeverityKey = contextKey("minSeverity")
+	requestKey     = contextKey("request")
+	statusKey      = contextKey("status")
+	latencyKey     = contextKey("latency")
+	traceKey       = contextKey("trace")
+	spanKey        = contextKey("span")
 )
 
 // WithSeverity returns a copy of parent with the specified severity value.
 func WithSeverity(parent context.Context, severity string) context.Context {
 	return context.WithValue(parent, severityKey, severity)
+}
+
+// WithMinSeverity sets the minimum severity to log.  Use one of the Severity*
+// constants.
+func WithMinSeverity(parent context.Context, severity string) context.Context {
+	return context.WithValue(parent, minSeverityKey, severity)
 }
 
 // WithRequest returns a copy of parent with the specified http.Request value.
